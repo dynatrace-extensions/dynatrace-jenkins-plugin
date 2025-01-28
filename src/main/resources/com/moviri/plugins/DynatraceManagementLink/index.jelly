@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form" xmlns:l="/lib/layout">
+    <l:layout title="Dynatrace Plugin Management">
+        <l:main-panel>
+            <h1>Dynatrace Plugin Log Archive</h1>
+            <p>Click the button below to download plugin logs.</p>
+            <form method="post" action="runAction">
+                <f:submit value="Download Logs" name="Download Logs" />
+            </form>
+        </l:main-panel>
+    </l:layout>
+</j:jelly>

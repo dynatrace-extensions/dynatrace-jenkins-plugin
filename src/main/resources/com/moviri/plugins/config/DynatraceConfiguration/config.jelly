@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:f="/lib/form">
+    <f:section title="Dynatrace">
+        <f:entry title="${%Dynatrace Tenant}" field="tenant">
+            <f:textbox/>
+        </f:entry>
+        <f:entry title="${%Dynatrace API Token}" field="apiToken">
+            <f:password/>
+        </f:entry>
+        <f:entry>
+            <f:radio title="${%Enabled}" value="false"/>
+        </f:entry>
+    </f:section>
+</j:jelly>
