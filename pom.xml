@@ -16,7 +16,7 @@
     <packaging>hpi</packaging>
 
     <name>DynExt Jenkins Plugin</name>
-    <url>https://github.com/Moviri/dynatrace-jenkins-plugin</url>
+    <url>https://github.com/dynatrace-extensions/dynatrace-jenkins-plugin</url>
     <licenses>
         <license>
             <name>MIT License</name>
@@ -25,10 +25,10 @@
     </licenses>
     <scm child.scm.connection.inherit.append.path="false" child.scm.developerConnection.inherit.append.path="false"
          child.scm.url.inherit.append.path="false">
-        <connection>scm:git:https://github.com/${gitHubRepo}</connection>
-        <developerConnection>scm:git:https://github.com/${gitHubRepo}</developerConnection>
+        <connection>scm:git:https://github.com/dynatrace-extensions/dynatrace-jenkins-plugin</connection>
+        <developerConnection>scm:git:https://github.com/dynatrace-extensions/dynatrace-jenkins-plugin</developerConnection>
         <tag>${scmTag}</tag>
-        <url>https://github.com/${gitHubRepo}</url>
+        <url>https://github.com/dynatrace-extensions/dynatrace-jenkins-plugin</url>
     </scm>
 
     <properties>
