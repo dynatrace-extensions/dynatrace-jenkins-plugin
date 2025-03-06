@@ -14,8 +14,8 @@ This plugin needs to be deployed on your Jenkins instance. There are two ways to
 
 - Login to Jenkins and navigate to `Manage Jenkins` -> `Plugins` -> `Advanced Settings`
 - There are two ways the HPI file can be installed:
-  - Download the HPI file from this repo at `dist/dynatrace-jenkins-plugin.hpi` and upload it under the `Deploy Plugin` section of the advanced settings
-  - Copy the URL to the HPI file on the Dynatrace GitHub and paste the URL: https://github.com/dynatrace-extensions/dynatrace-jenkins-plugin/dist/dynatrace-jenkins-plugin.hpi
+  - Download the HPI file from this repo at `dist/dynatrace-plugin.hpi` and upload it under the `Deploy Plugin` section of the advanced settings
+  - Copy the URL to the HPI file on the Dynatrace GitHub and paste the URL: https://github.com/dynatrace-extensions/dynatrace-jenkins-plugin/dist/dynatrace-plugin.hpi
 - Click on the `Deploy` button and if needed restart Jenkins
 
 ### Compile from source
