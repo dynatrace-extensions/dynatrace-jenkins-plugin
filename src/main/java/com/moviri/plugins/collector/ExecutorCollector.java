@@ -2,8 +2,7 @@ package com.moviri.plugins.collector;
 
 import com.moviri.plugins.Preload;
 import com.moviri.plugins.ws.MintMetric;
-import hudson.model.Label;
-import hudson.model.LoadStatistics;
+import hudson.model.*;
 import io.jenkins.cli.shaded.org.slf4j.Logger;
 import io.jenkins.cli.shaded.org.slf4j.LoggerFactory;
 import jenkins.model.Jenkins;
@@ -31,7 +30,7 @@ public class ExecutorCollector implements Collector<List<MintMetric>> {
         LOGGER.info("Collecting Executor metrics");
         List<MintMetric> metrics = new ArrayList<>();
         for (Label l : getJenkins().getLabels()) {
-            var dimensions = Map.ofEntries(entry("label", l.getDisplayName()));
+            var dimensions = Map.ofEntries(entry("node", l.getDisplayName()));
             var loadStatistics = getLoadStatistics(l);
 
             metrics.add(new MintMetric(EXECUTORS_QUEUE_LENGTH, loadStatistics.getQueueLength(), dimensions));

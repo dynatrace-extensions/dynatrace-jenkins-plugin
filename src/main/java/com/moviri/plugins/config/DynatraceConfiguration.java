@@ -10,7 +10,7 @@ import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
 
 @Getter
-@Extension(dynamicLoadable = YesNoMaybe.NO)
+@Extension
 public class DynatraceConfiguration extends GlobalConfiguration {
 
     private String tenant;

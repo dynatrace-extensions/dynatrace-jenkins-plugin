@@ -96,7 +96,6 @@ public class JobLogCollector implements Collector<List<LogLine>> {
         var nextBuildNumberPath = jobRootDir.resolve("nextBuildNumber");
         try {
             String content = Files.readString(nextBuildNumberPath, StandardCharsets.UTF_8);
-            LOGGER.info("read next build number: " + content);
             return Integer.parseInt(content.trim());
         } catch (IOException e) {
             throw new RuntimeException(e);

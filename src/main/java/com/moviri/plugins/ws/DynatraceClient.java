@@ -14,6 +14,7 @@ import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.json.JSONArray;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,7 +27,7 @@ public class DynatraceClient {
         this.client = getDefaultHttpClient();
     }
 
-    public void postMintMetrics(List<MintMetric> mintMetrics) throws IOException {
+    public void postMintMetrics(List<MintMetric> mintMetrics) throws IOException, ParseException {
         var url = this.formatUrl("/api/v2/metrics/ingest");
 
         HttpPost request = new HttpPost(url);
@@ -39,6 +40,9 @@ public class DynatraceClient {
 
         request.setEntity(new StringEntity(formatMetricLines(mintMetrics)));
         CloseableHttpResponse response = this.client.execute(request);
+        int statusCode = response.getCode();
+        String body = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+        LOGGER.info("Sent metric lines (" + statusCode + "): " + body);
         this.checkErrors(response);
     }
 

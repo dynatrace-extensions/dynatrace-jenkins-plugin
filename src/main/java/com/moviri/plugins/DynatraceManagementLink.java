@@ -1,5 +1,6 @@
 package com.moviri.plugins;
 
+import edu.umd.cs.findbugs.annotations.NonNull;
 import hudson.Extension;
 import hudson.logging.LogRecorder;
 import hudson.model.ManagementLink;
@@ -36,6 +37,17 @@ public class DynatraceManagementLink extends ManagementLink {
     @Override
     public String getUrlName() {
         return "dynatrace-plugin";
+    }
+
+    @Override
+    public String getDescription() {
+        return "Download the Dynatrace plugin logs";
+    }
+
+    @NonNull
+    @Override
+    public Category getCategory() {
+        return Category.STATUS;
     }
 
     @RequirePOST
