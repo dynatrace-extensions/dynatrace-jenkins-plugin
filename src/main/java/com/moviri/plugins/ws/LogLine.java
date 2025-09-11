@@ -2,6 +2,7 @@ package com.moviri.plugins.ws;
 
 import lombok.Getter;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Getter
@@ -27,12 +28,22 @@ public class LogLine {
     private final String job;
     private final String buildId;
     private final Status status;
+    private final Map<String, String> extraEntries;
 
     public LogLine(String content, String job, String buildId, Status status) {
         this.content = content;
         this.job = job;
         this.buildId = buildId;
         this.status = status;
+        this.extraEntries = new HashMap<>();
+    }
+
+    public LogLine(String content, String job, String buildId, Status status, Map<String, String> extraEntries) {
+        this.content = content;
+        this.job = job;
+        this.buildId = buildId;
+        this.status = status;
+        this.extraEntries = extraEntries;
     }
 
     public LogLine(String content, String job, String buildId) {
@@ -40,12 +51,14 @@ public class LogLine {
     }
 
     public Map<String, String> toMap() {
-        return Map.ofEntries(
+        Map<String, String> result = new HashMap<>(Map.ofEntries(
                 Map.entry("content", this.content),
                 Map.entry("jenkins.job", this.job),
                 Map.entry("jenkins.build_id", this.buildId),
                 Map.entry("status", this.status.toString())
-        );
+        ));
+        result.putAll(this.extraEntries);
+        return result;
     }
 
 }

@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 // https://github.com/LarrysGIT/Extract-Jenkins-Raw-Log
@@ -30,7 +31,7 @@ public class JobLogCollector implements Collector<List<LogLine>> {
         LOGGER.info("Collecting logs...");
         var jenkins = getJenkins();
         var logLines = new ArrayList<LogLine>();
-        for (Job<?, ?> job : jenkins.getAllItems(Job.class)) {
+        jobLoop: for (Job<?, ?> job : jenkins.getAllItems(Job.class)) {
             var pipelineDisplayName = job.getDisplayName();
             var pipelineRootDir = job.getRootDir().toPath();
             int currentBuildNumber = getValueStore().getLastBuildId(pipelineDisplayName);
@@ -42,8 +43,14 @@ public class JobLogCollector implements Collector<List<LogLine>> {
                 continue;
             }
             while (currentBuildNumber < nextBuildNumber) {
-                LOGGER.info("Ingesting logs for '" + currentBuildNumber + "'");
-                var buildLogPath = buildDirectory.resolve(String.valueOf(currentBuildNumber++)).resolve("log");
+                var build = job.getBuild(String.valueOf(currentBuildNumber));
+                if (build.isBuilding()) {
+                    LOGGER.info("Build '" + currentBuildNumber + "' on " + pipelineDisplayName + " is not completed yet.");
+                    continue jobLoop;
+                }
+
+                LOGGER.info("Ingesting logs for '" + currentBuildNumber + "' on " + pipelineDisplayName);
+                var buildLogPath = buildDirectory.resolve(String.valueOf(currentBuildNumber)).resolve("log");
                 try {
                     Scanner scanner = createScanner(buildLogPath.toFile());
                     StringBuilder sb = new StringBuilder();
@@ -56,11 +63,15 @@ public class JobLogCollector implements Collector<List<LogLine>> {
                     if (content.contains("Finished: FAILURE")) {
                         status = LogLine.Status.ERROR;
                     }
-                    logLines.add(new LogLine(sb.toString(), pipelineDisplayName, String.valueOf(currentBuildNumber), status));
+                    var duration = build.getDuration();
+                    logLines.add(new LogLine(sb.toString(), pipelineDisplayName, String.valueOf(currentBuildNumber), status, Map.ofEntries(
+                            Map.entry("jenkins.build_duration_ms", String.valueOf(duration))
+                    )));
                     scanner.close();
                 } catch (FileNotFoundException e) {
                     LOGGER.error("File not found: " + e);
                 }
+                currentBuildNumber++;
             }
             getValueStore().setLastBuildId(pipelineDisplayName, nextBuildNumber);
         }
