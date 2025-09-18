@@ -127,6 +127,10 @@ public class Dynatrace extends PeriodicWork {
     }
 
     protected DynatraceClient getDynatraceClient() {
+        var config = getDynatraceConfiguration();
+        DT_LOGGER.info("proxyUrl: {}", config.getProxyUrl());
+        DT_LOGGER.info("proxyUsername: {}", config.getProxyUsername());
+        DT_LOGGER.info("proxyPassword: {}", config.getProxyPassword());
         return new DynatraceClient();
     }
 

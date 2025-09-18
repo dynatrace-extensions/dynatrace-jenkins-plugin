@@ -4,16 +4,23 @@ import com.moviri.plugins.Preload;
 import com.moviri.plugins.config.DynatraceConfiguration;
 import io.jenkins.cli.shaded.org.slf4j.Logger;
 import io.jenkins.cli.shaded.org.slf4j.LoggerFactory;
+import org.apache.hc.client5.http.auth.AuthScope;
+import org.apache.hc.client5.http.auth.UsernamePasswordCredentials;
 import org.apache.hc.client5.http.classic.methods.HttpPost;
+import org.apache.hc.client5.http.impl.auth.BasicCredentialsProvider;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpResponse;
+import org.apache.hc.client5.http.impl.classic.HttpClientBuilder;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.impl.routing.DefaultProxyRoutePlanner;
+import org.apache.hc.core5.http.HttpHost;
 import org.apache.hc.core5.http.ParseException;
 import org.apache.hc.core5.http.io.entity.EntityUtils;
 import org.apache.hc.core5.http.io.entity.StringEntity;
 import org.json.JSONArray;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,10 +28,33 @@ import java.util.stream.Collectors;
 @Preload
 public class DynatraceClient {
     private static final Logger LOGGER = getLogger();
-    private final CloseableHttpClient client;
+    private CloseableHttpClient client;
 
     public DynatraceClient() {
         this.client = getDefaultHttpClient();
+        this.tryCreateHttpClient();
+    }
+
+    private void tryCreateHttpClient() {
+        DynatraceConfiguration config = getDynatraceConfiguration();
+        String proxyUrl = config.getProxyUrl();
+        if (proxyUrl != null) {
+            URI uri = URI.create(proxyUrl);
+            HttpHost proxyHost = new HttpHost(uri.getScheme(), uri.getHost(), uri.getPort());
+            HttpClientBuilder builder = HttpClients.custom().setRoutePlanner(new DefaultProxyRoutePlanner(proxyHost));
+
+            String username = config.getProxyUsername();
+            String password = config.getProxyPassword();
+            if (username != null && password != null) {
+                BasicCredentialsProvider credentialsProvider = new BasicCredentialsProvider();
+                credentialsProvider.setCredentials(
+                        new AuthScope(proxyHost),
+                        new UsernamePasswordCredentials(username, password.toCharArray())
+                );
+                builder.setDefaultCredentialsProvider(credentialsProvider);
+            }
+            this.client = builder.build();
+        }
     }
 
     public void postMintMetrics(List<MintMetric> mintMetrics) throws IOException, ParseException {

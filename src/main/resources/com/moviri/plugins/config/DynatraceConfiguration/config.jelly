@@ -8,6 +8,15 @@
         <f:entry title="${%Dynatrace API Token}" field="apiToken">
             <f:password/>
         </f:entry>
+        <f:entry title="${%Proxy Url}" field="proxyUrl">
+            <f:textbox/>
+        </f:entry>
+        <f:entry title="${%Proxy Username}" field="proxyUsername">
+            <f:textbox/>
+        </f:entry>
+        <f:entry title="${%Proxy Password}" field="proxyPassword">
+            <f:password/>
+        </f:entry>
         <f:entry>
             <f:radio title="${%Enabled}" value="false"/>
         </f:entry>

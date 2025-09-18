@@ -9,12 +9,17 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import java.util.Optional;
+
 @Getter
 @Extension
 public class DynatraceConfiguration extends GlobalConfiguration {
 
     private String tenant;
     private String apiToken;
+    private String proxyUrl;
+    private String proxyUsername;
+    private String proxyPassword;
 
     public DynatraceConfiguration() {
         load();
@@ -50,5 +55,20 @@ public class DynatraceConfiguration extends GlobalConfiguration {
     @DataBoundSetter
     public void setApiToken(String apiToken) {
         this.apiToken = apiToken;
+    }
+
+    @DataBoundSetter
+    public void setProxyUrl(String proxyUrl) {
+        this.proxyUrl = proxyUrl;
+    }
+
+    @DataBoundSetter
+    public void setProxyUsername(String proxyUsername) {
+        this.proxyUsername = proxyUsername;
+    }
+
+    @DataBoundSetter
+    public void setProxyPassword(String proxyPassword) {
+        this.proxyPassword = proxyPassword;
     }
 }
