@@ -41,6 +41,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
 
     @Override
     public List<MintMetric> collect() {
+        LOGGER.info("Starting filesystem metric collector...");
         var metrics = Stream.of(
                 this.collectFSMetrics(),
                 this.collectLocalDirectoryMetrics(),
@@ -48,7 +49,8 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
         ).flatMap(Collection::stream).collect(Collectors.toList());
 
         var jenkins = getJenkins();
-        // Iterate over all Jenkins nodes (not include the controller node)
+        // Iterate over all Jenkins nodes (not including the controller node)
+        LOGGER.info("Got jenkins nodes: {}", jenkins.getNodes());
         for (Node jenkinsNode : jenkins.getNodes()) {
             metrics.addAll(this.collectRemoteDirectoryMetrics(jenkinsNode));
             metrics.addAll(this.collectRemoteFSMetrics(jenkinsNode));
@@ -63,6 +65,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
      * @return list of metrics
      */
     protected List<MintMetric> collectRemoteDirectoryMetrics(Node jenkinsNode) {
+        LOGGER.info("Collecting remote directory metrics...");
         var metrics = new ArrayList<MintMetric>();
         Map<FilePath, String> directories = new HashMap<>();
         var rootPath = jenkinsNode.getRootPath();
@@ -94,6 +97,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
             metrics.add(new MintMetric(DIRECTORY_SIZE, directorySize.getSize(), dimensions));
             metrics.add(new MintMetric(DIRECTORY_FILE_COUNT, directorySize.getCount(), dimensions));
         }
+        LOGGER.info("Added {} metric lines.", metrics.size());
         return metrics;
     }
 
@@ -103,6 +107,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
      * @return list of metrics
      */
     protected List<MintMetric> collectLocalDirectoryMetrics() {
+        LOGGER.info("Collecting local directory metrics...");
         var jenkins = getJenkins();
         Map<File, String> directories = new HashMap<>();
         // Include the Jenkins root directory and the java temp dir in the metrics
@@ -133,7 +138,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
             metrics.add(new MintMetric(DIRECTORY_SIZE, directorySize.getSize(), dimensions));
             metrics.add(new MintMetric(DIRECTORY_FILE_COUNT, directorySize.getCount(), dimensions));
         }
-
+        LOGGER.info("Added {} metric lines.", metrics.size());
         return metrics;
     }
 
@@ -191,6 +196,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
     }
 
     protected List<MintMetric> collectRemoteFSMetrics(Node jenkinsNode) {
+        LOGGER.info("Collecting remote filesystem metrics...");
         var metrics = new ArrayList<MintMetric>();
         Map<String, String> dimensions = new HashMap<>();
         dimensions.put("node", jenkinsNode.getSelfLabel().getDisplayName());
@@ -209,6 +215,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
         } catch (IOException | InterruptedException e) {
             LOGGER.error("Error collecting remote FS metrics: " + e);
         }
+        LOGGER.info("Added {} metric lines.", metrics.size());
         return metrics;
     }
 
@@ -218,6 +225,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
      * @return list of metrics
      */
     protected List<MintMetric> collectFSMetrics() {
+        LOGGER.info("Collecting filesystem metrics...");
         var jenkins = getJenkins();
         Map<String, String> dimensions = new HashMap<>();
         dimensions.put("node", jenkins.getSelfLabel().getDisplayName());
@@ -228,6 +236,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
         metrics.add(new MintMetric(FS_TOTAL_SIZE, totalDiskSpace, dimensions));
         metrics.add(new MintMetric(FS_FREE_SIZE, freeDiskSpace, dimensions));
         metrics.add(new MintMetric(FS_USED_SIZE, (totalDiskSpace - freeDiskSpace), dimensions));
+        LOGGER.info("Added {} metric lines.", metrics.size());
         return metrics;
     }
 
@@ -237,6 +246,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
      * @return list of metrics
      */
     protected List<MintMetric> collectJobMetrics() {
+        LOGGER.info("Collecting job filesystem metrics...");
         var jenkins = getJenkins();
         var metrics = new ArrayList<MintMetric>();
         Map<String, String> commonDimensions = new HashMap<>();
@@ -254,6 +264,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
             }
         }
 
+        LOGGER.info("Added {} metric lines.", metrics.size());
         return metrics;
     }
 

@@ -103,7 +103,7 @@ public class Dynatrace extends PeriodicWork {
 
     @Override
     protected void doRun() {
-        DT_LOGGER.info("Running query method");
+        DT_LOGGER.info("Running query method ({})", Jenkins.getVersion());
         DynatraceConfiguration config = getDynatraceConfiguration();
         if (config == null) {
             DT_LOGGER.error("Config is null.");
@@ -128,9 +128,7 @@ public class Dynatrace extends PeriodicWork {
 
     protected DynatraceClient getDynatraceClient() {
         var config = getDynatraceConfiguration();
-        DT_LOGGER.info("proxyUrl: {}", config.getProxyUrl());
-        DT_LOGGER.info("proxyUsername: {}", config.getProxyUsername());
-        DT_LOGGER.info("proxyPassword: {}", config.getProxyPassword());
+        DT_LOGGER.info("Using Proxy: {}", config.getProxyUrl());
         return new DynatraceClient();
     }
 
