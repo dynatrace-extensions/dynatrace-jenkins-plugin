@@ -38,7 +38,7 @@ public class DynatraceClient {
     private void tryCreateHttpClient() {
         DynatraceConfiguration config = getDynatraceConfiguration();
         String proxyUrl = config.getProxyUrl();
-        if (proxyUrl != null) {
+        if (!proxyUrl.isEmpty()) {
             URI uri = URI.create(proxyUrl);
             HttpHost proxyHost = new HttpHost(uri.getScheme(), uri.getHost(), uri.getPort());
             HttpClientBuilder builder = HttpClients.custom().setRoutePlanner(new DefaultProxyRoutePlanner(proxyHost));
