@@ -18,6 +18,7 @@ import io.jenkins.cli.shaded.org.slf4j.LoggerFactory;
 import jenkins.model.Jenkins;
 import org.reflections.Reflections;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
@@ -31,13 +32,13 @@ public class Dynatrace extends PeriodicWork {
     protected static final List<Collector<List<MintMetric>>> metricCollectors = new ArrayList<>();
     protected static final List<Collector<List<LogLine>>> logCollectors = new ArrayList<>();
 
+    private static final String VERSION = "1.0.0";
     private static final long RECURRENCE_PERIOD = TimeUnit.MINUTES.toMillis(1);
     public static final String LOG_PACKAGE_NAME = "com.moviri.plugins";
     public static final String LOG_RECORDER_NAME = "Dynatrace logs";
 
     @Initializer(after = InitMilestone.PLUGINS_STARTED)
     public static void initialize() {
-        DT_LOGGER.info("initialize");
         metricCollectors.add(new FilesystemMetricCollector());
         metricCollectors.add(new ExecutorCollector());
 
@@ -63,11 +64,17 @@ public class Dynatrace extends PeriodicWork {
                 ).filter(logName -> !(LOG_PACKAGE_NAME + ".DynatraceManagementLink").equals(logName))
                 .collect(Collectors.toList());
 
+
         List<LogRecorder> logRecorders = Jenkins.get().getLog().getRecorders();
         boolean dynatraceLogRecorderExists = logRecorders.stream().anyMatch(logRecorder -> LOG_RECORDER_NAME.equals(logRecorder.getDisplayName()));
 
         if (dynatraceLogRecorderExists) {
-            return;
+            try {
+                Jenkins.get().getLog().getLogRecorder(LOG_RECORDER_NAME).delete();
+            } catch (IOException e) {
+                DT_LOGGER.error("Error removing log recorder: {}", e);
+                throw new RuntimeException(e);
+            }
         }
 
         // Create a new log recorder for this plugins logs.
@@ -88,6 +95,7 @@ public class Dynatrace extends PeriodicWork {
         Reflections reflections = new Reflections(LOG_PACKAGE_NAME);
         Set<Class<?>> classesToPreload = reflections.getTypesAnnotatedWith(Preload.class);
         for (Class<?> clazz : classesToPreload) {
+            DT_LOGGER.info("Preloading class: {}", clazz.getName());
             try {
                 Class.forName(clazz.getName());
             } catch (ClassNotFoundException e) {
@@ -103,7 +111,7 @@ public class Dynatrace extends PeriodicWork {
 
     @Override
     protected void doRun() {
-        DT_LOGGER.info("Running query method ({})", Jenkins.getVersion());
+        DT_LOGGER.info("Running query method ({}) ({})", Jenkins.getVersion(), VERSION);
         DynatraceConfiguration config = getDynatraceConfiguration();
         if (config == null) {
             DT_LOGGER.error("Config is null.");
@@ -123,6 +131,7 @@ public class Dynatrace extends PeriodicWork {
             }
         } catch (Exception e) {
             DT_LOGGER.error(e.toString());
+            e.printStackTrace();
         }
     }
 

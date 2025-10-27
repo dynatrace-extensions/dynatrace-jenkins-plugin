@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 
 @Preload
 public class DynatraceClient {
-    private static final Logger LOGGER = getLogger();
+    private static final Logger LOGGER = LoggerFactory.getLogger(DynatraceClient.class);
     private CloseableHttpClient client;
 
     public DynatraceClient() {
@@ -57,7 +57,7 @@ public class DynatraceClient {
         }
     }
 
-    public void postMintMetrics(List<MintMetric> mintMetrics) throws IOException, ParseException {
+    public void postMintMetrics(List<MintMetric> mintMetrics) {
         var url = this.formatUrl("/api/v2/metrics/ingest");
 
         HttpPost request = new HttpPost(url);
@@ -69,14 +69,20 @@ public class DynatraceClient {
         }
 
         request.setEntity(new StringEntity(formatMetricLines(mintMetrics)));
-        CloseableHttpResponse response = this.client.execute(request);
-        int statusCode = response.getCode();
-        String body = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
-        LOGGER.info("Sent metric lines (" + statusCode + "): " + body);
-        this.checkErrors(response);
+        try {
+            CloseableHttpResponse response = this.client.execute(request);
+            int statusCode = response.getCode();
+            String body = EntityUtils.toString(response.getEntity(), StandardCharsets.UTF_8);
+            LOGGER.info("Sent metric lines (" + statusCode + "): " + body);
+            this.checkErrors(response);
+        } catch (IOException e) {
+            LOGGER.error("Error sending mint metric: {}", e);
+        } catch (ParseException e) {
+            LOGGER.error("Error parsing mint metric response: {}", e);
+        }
     }
 
-    public void postLogLines(List<LogLine> logLines) throws IOException {
+    public void postLogLines(List<LogLine> logLines) {
         var url = this.formatUrl("/api/v2/logs/ingest");
 
         HttpPost request = new HttpPost(url);
@@ -90,8 +96,12 @@ public class DynatraceClient {
         var jsonString = new JSONArray(logLineMap).toString();
         request.setEntity(new StringEntity(jsonString));
 
-        CloseableHttpResponse response = this.client.execute(request);
-        this.checkErrors(response);
+        try {
+            CloseableHttpResponse response = this.client.execute(request);
+            this.checkErrors(response);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     protected String formatUrl(String endpoint) {
@@ -129,9 +139,5 @@ public class DynatraceClient {
 
     protected CloseableHttpClient getDefaultHttpClient() {
         return HttpClients.createDefault();
-    }
-
-    protected static Logger getLogger() {
-        return LoggerFactory.getLogger(DynatraceClient.class);
     }
 }
