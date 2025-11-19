@@ -17,8 +17,16 @@
         <f:entry title="${%Proxy Password}" field="proxyPassword">
             <f:password/>
         </f:entry>
-        <f:entry>
-            <f:radio title="${%Enabled}" value="false"/>
+        <f:entry title="Filesystem Metrics Enabled" field="filesystemMetricsEnabled">
+            <f:checkbox default="true" checked="${instance.filesystemMetricsEnabled}" />
+        </f:entry>
+
+        <f:entry title="Executor Metrics Enabled" field="executorMetricsEnabled">
+            <f:checkbox default="true" checked="${instance.executorMetricsEnabled}" />
+        </f:entry>
+
+        <f:entry title="Job Log Enabled" field="jobLogEnabled">
+            <f:checkbox default="true" checked="${instance.jobLogEnabled}" />
         </f:entry>
     </f:section>
 </j:jelly>

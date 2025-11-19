@@ -20,6 +20,9 @@ public class DynatraceConfiguration extends GlobalConfiguration {
     private String proxyUrl;
     private String proxyUsername;
     private String proxyPassword;
+    private boolean filesystemMetricsEnabled;
+    private boolean executorMetricsEnabled;
+    private boolean jobLogEnabled;
 
     public DynatraceConfiguration() {
         load();
@@ -71,4 +74,22 @@ public class DynatraceConfiguration extends GlobalConfiguration {
     public void setProxyPassword(String proxyPassword) {
         this.proxyPassword = proxyPassword;
     }
+
+    @DataBoundSetter
+    public void setFilesystemMetricsEnabled(boolean enabled) {
+        this.filesystemMetricsEnabled = enabled;
+    }
+
+
+    @DataBoundSetter
+    public void setExecutorMetricsEnabled(boolean enabled) {
+        this.executorMetricsEnabled = enabled;
+    }
+
+
+    @DataBoundSetter
+    public void setJobLogEnabled(boolean enabled) {
+        this.jobLogEnabled = enabled;
+    }
+
 }
