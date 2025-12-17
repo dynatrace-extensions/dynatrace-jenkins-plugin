@@ -20,9 +20,9 @@ public class DynatraceConfiguration extends GlobalConfiguration {
     private String proxyUrl;
     private String proxyUsername;
     private String proxyPassword;
-    private boolean filesystemMetricsEnabled;
-    private boolean executorMetricsEnabled;
-    private boolean jobLogEnabled;
+    private boolean filesystemMetricsEnabled = true;
+    private boolean executorMetricsEnabled = true;
+    private boolean jobLogEnabled = true;
 
     public DynatraceConfiguration() {
         load();
