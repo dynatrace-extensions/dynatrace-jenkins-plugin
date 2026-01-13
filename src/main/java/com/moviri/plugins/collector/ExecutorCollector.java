@@ -8,6 +8,7 @@ import io.jenkins.cli.shaded.org.slf4j.LoggerFactory;
 import jenkins.model.Jenkins;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -30,7 +31,8 @@ public class ExecutorCollector implements Collector<List<MintMetric>> {
         LOGGER.info("Collecting Executor metrics");
         List<MintMetric> metrics = new ArrayList<>();
         for (Label l : getJenkins().getLabels()) {
-            var dimensions = Map.ofEntries(entry("node", l.getDisplayName()));
+            Map<String, String> dimensions = new HashMap<>();
+            dimensions.put("node", l.getDisplayName());
             var loadStatistics = getLoadStatistics(l);
 
             metrics.add(new MintMetric(EXECUTORS_QUEUE_LENGTH, loadStatistics.getQueueLength(), dimensions));

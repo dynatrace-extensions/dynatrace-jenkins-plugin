@@ -18,15 +18,20 @@
             <f:password/>
         </f:entry>
         <f:entry title="Filesystem Metrics Enabled" field="filesystemMetricsEnabled">
-            <f:checkbox default="true" checked="${instance.filesystemMetricsEnabled}" />
+            <f:checkbox default="true" checked="${instance.filesystemMetricsEnabled}"/>
         </f:entry>
 
         <f:entry title="Executor Metrics Enabled" field="executorMetricsEnabled">
-            <f:checkbox default="true" checked="${instance.executorMetricsEnabled}" />
+            <f:checkbox default="true" checked="${instance.executorMetricsEnabled}"/>
         </f:entry>
 
         <f:entry title="Job Log Enabled" field="jobLogEnabled">
-            <f:checkbox default="true" checked="${instance.jobLogEnabled}" />
+            <f:checkbox default="true" checked="${instance.jobLogEnabled}"/>
+        </f:entry>
+
+        <f:entry title="Custom Dimensions" description="Custom Dimensions">
+            <f:repeatableProperty field="customDimensions" minimum="0" add="Add Custom Dimension">
+            </f:repeatableProperty>
         </f:entry>
     </f:section>
 </j:jelly>

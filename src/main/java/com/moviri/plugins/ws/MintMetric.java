@@ -1,9 +1,11 @@
 package com.moviri.plugins.ws;
 
+import com.moviri.plugins.config.KeyValuePair;
 import lombok.Getter;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -27,7 +29,7 @@ public class MintMetric {
 
     private final String key;
     private final double value;
-    private final Map<String, String> dimensions;
+    private Map<String, String> dimensions;
     private final MetricType metricType;
 
     public MintMetric(String key, double value, Map<String, String> dimensions, MetricType metricType) {
@@ -43,6 +45,12 @@ public class MintMetric {
 
     public MintMetric(String key, double value) {
         this(key, value, new HashMap<>(), MetricType.GAUGE);
+    }
+
+    public void addDimensions(List<KeyValuePair> customDimensions) {
+        for (KeyValuePair pair : customDimensions) {
+            this.dimensions.put(pair.getKey(), pair.getValue());
+        }
     }
 
     @Override

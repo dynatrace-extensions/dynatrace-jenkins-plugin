@@ -65,6 +65,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
      * @return list of metrics
      */
     protected List<MintMetric> collectRemoteDirectoryMetrics(Node jenkinsNode) {
+        long startTime = System.currentTimeMillis();
         LOGGER.info("Collecting remote directory metrics...");
         var metrics = new ArrayList<MintMetric>();
         Map<FilePath, String> directories = new HashMap<>();
@@ -98,6 +99,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
             metrics.add(new MintMetric(DIRECTORY_FILE_COUNT, directorySize.getCount(), dimensions));
         }
         LOGGER.info("Added {} metric lines.", metrics.size());
+        LOGGER.info("Collected remote directory metrics in {}ms", System.currentTimeMillis() - startTime);
         return metrics;
     }
 
@@ -107,6 +109,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
      * @return list of metrics
      */
     protected List<MintMetric> collectLocalDirectoryMetrics() {
+        long startTime = System.currentTimeMillis();
         LOGGER.info("Collecting local directory metrics...");
         var jenkins = getJenkins();
         Map<File, String> directories = new HashMap<>();
@@ -139,6 +142,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
             metrics.add(new MintMetric(DIRECTORY_FILE_COUNT, directorySize.getCount(), dimensions));
         }
         LOGGER.info("Added {} metric lines.", metrics.size());
+        LOGGER.info("Collected local directory metrics in {}ms", System.currentTimeMillis() - startTime);
         return metrics;
     }
 
@@ -196,6 +200,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
     }
 
     protected List<MintMetric> collectRemoteFSMetrics(Node jenkinsNode) {
+        long startTime = System.currentTimeMillis();
         LOGGER.info("Collecting remote filesystem metrics...");
         var metrics = new ArrayList<MintMetric>();
         Map<String, String> dimensions = new HashMap<>();
@@ -216,6 +221,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
             LOGGER.error("Error collecting remote FS metrics: " + e);
         }
         LOGGER.info("Added {} metric lines.", metrics.size());
+        LOGGER.info("Collected remote filesystem metrics in {}ms", System.currentTimeMillis() - startTime);
         return metrics;
     }
 
@@ -225,6 +231,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
      * @return list of metrics
      */
     protected List<MintMetric> collectFSMetrics() {
+        long startTime = System.currentTimeMillis();
         LOGGER.info("Collecting filesystem metrics...");
         var jenkins = getJenkins();
         Map<String, String> dimensions = new HashMap<>();
@@ -237,6 +244,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
         metrics.add(new MintMetric(FS_FREE_SIZE, freeDiskSpace, dimensions));
         metrics.add(new MintMetric(FS_USED_SIZE, (totalDiskSpace - freeDiskSpace), dimensions));
         LOGGER.info("Added {} metric lines.", metrics.size());
+        LOGGER.info("Collected filesystem metrics in {}ms", System.currentTimeMillis() - startTime);
         return metrics;
     }
 
@@ -246,6 +254,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
      * @return list of metrics
      */
     protected List<MintMetric> collectJobMetrics() {
+        long startTime = System.currentTimeMillis();
         LOGGER.info("Collecting job filesystem metrics...");
         var jenkins = getJenkins();
         var metrics = new ArrayList<MintMetric>();
@@ -265,6 +274,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
         }
 
         LOGGER.info("Added {} metric lines.", metrics.size());
+        LOGGER.info("Collected job filesystem metrics in {},ms", System.currentTimeMillis() - startTime);
         return metrics;
     }
 

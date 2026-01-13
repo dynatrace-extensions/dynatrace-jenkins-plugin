@@ -4,7 +4,9 @@ import com.moviri.plugins.collector.ExecutorCollector;
 import com.moviri.plugins.collector.FilesystemMetricCollector;
 import com.moviri.plugins.collector.JobLogCollector;
 import com.moviri.plugins.config.DynatraceConfiguration;
+import com.moviri.plugins.config.KeyValuePair;
 import com.moviri.plugins.ws.DynatraceClient;
+import com.moviri.plugins.ws.MintMetric;
 import hudson.Extension;
 import hudson.init.InitMilestone;
 import hudson.init.Initializer;
@@ -30,7 +32,7 @@ import java.util.stream.Collectors;
 public class Dynatrace extends PeriodicWork {
 
     private static final Logger DT_LOGGER = LoggerFactory.getLogger(Dynatrace.class);
-    private static final String VERSION = "1.0.4";
+    private static final String VERSION = "1.0.5";
     private static final long RECURRENCE_PERIOD = TimeUnit.MINUTES.toMillis(1);
     public static final String LOG_PACKAGE_NAME = "com.moviri.plugins";
     public static final String LOG_RECORDER_NAME = "Dynatrace logs";
@@ -106,14 +108,18 @@ public class Dynatrace extends PeriodicWork {
     private void collectFSMetrics(DynatraceClient client) {
         if (DynatraceConfiguration.get().isFilesystemMetricsEnabled()) {
             DT_LOGGER.info("Collecting Filesystem Metrics");
-            client.postMintMetrics(new FilesystemMetricCollector().collect());
+            List<MintMetric> metrics = new FilesystemMetricCollector().collect();
+            metrics.forEach(metric -> metric.addDimensions(DynatraceConfiguration.get().getCustomDimensions()));
+            client.postMintMetrics(metrics);
         }
     }
 
     private void collectExecutorMetrics(DynatraceClient client) {
         if (DynatraceConfiguration.get().isExecutorMetricsEnabled()) {
             DT_LOGGER.info("Collecting Executor Metrics");
-            client.postMintMetrics(new ExecutorCollector().collect());
+            List<MintMetric> metrics = new ExecutorCollector().collect();
+            metrics.forEach(metric -> metric.addDimensions(DynatraceConfiguration.get().getCustomDimensions()));
+            client.postMintMetrics(metrics);
         }
     }
 
@@ -132,6 +138,10 @@ public class Dynatrace extends PeriodicWork {
         if (config == null) {
             DT_LOGGER.error("Config is null.");
             return;
+        }
+
+        for (KeyValuePair pair : config.getCustomDimensions()) {
+            DT_LOGGER.info("Got custom dimension: ({}, {})", pair.getKey(), pair.getValue());
         }
 
         try {

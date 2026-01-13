@@ -9,6 +9,8 @@ import net.sf.json.JSONObject;
 import org.kohsuke.stapler.DataBoundSetter;
 import org.kohsuke.stapler.StaplerRequest;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Getter
@@ -23,7 +25,7 @@ public class DynatraceConfiguration extends GlobalConfiguration {
     private boolean filesystemMetricsEnabled = true;
     private boolean executorMetricsEnabled = true;
     private boolean jobLogEnabled = true;
-
+    private List<KeyValuePair> customDimensions = new ArrayList<>();
     public DynatraceConfiguration() {
         load();
     }
@@ -48,6 +50,11 @@ public class DynatraceConfiguration extends GlobalConfiguration {
         req.bindJSON(this, json);
         save();
         return true;
+    }
+
+    @DataBoundSetter
+    public void setCustomDimensions(List<KeyValuePair> customDimensions) {
+        this.customDimensions = customDimensions;
     }
 
     @DataBoundSetter
