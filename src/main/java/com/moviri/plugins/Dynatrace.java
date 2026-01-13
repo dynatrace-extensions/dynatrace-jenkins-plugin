@@ -140,10 +140,6 @@ public class Dynatrace extends PeriodicWork {
             return;
         }
 
-        for (KeyValuePair pair : config.getCustomDimensions()) {
-            DT_LOGGER.info("Got custom dimension: ({}, {})", pair.getKey(), pair.getValue());
-        }
-
         try {
             DynatraceClient client = getDynatraceClient();
             CompletableFuture<Void> fsMetrics = CompletableFuture.runAsync(() -> collectFSMetrics(client));
