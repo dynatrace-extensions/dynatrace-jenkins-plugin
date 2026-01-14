@@ -32,7 +32,7 @@ import java.util.stream.Collectors;
 public class Dynatrace extends PeriodicWork {
 
     private static final Logger DT_LOGGER = LoggerFactory.getLogger(Dynatrace.class);
-    private static final String VERSION = "1.0.5";
+    private static final String VERSION = "1.0.6";
     private static final long RECURRENCE_PERIOD = TimeUnit.MINUTES.toMillis(1);
     public static final String LOG_PACKAGE_NAME = "com.moviri.plugins";
     public static final String LOG_RECORDER_NAME = "Dynatrace logs";

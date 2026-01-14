@@ -8,13 +8,14 @@ import hudson.model.*;
 import io.jenkins.cli.shaded.org.slf4j.Logger;
 import io.jenkins.cli.shaded.org.slf4j.LoggerFactory;
 import jenkins.model.Jenkins;
-import lombok.Getter;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.moviri.plugins.collector.FilesystemUtils.calculateDirectorySize;
 
 @Preload
 public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
@@ -27,17 +28,6 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
     private static final String FS_FREE_SIZE = "jenkins.fs.free";
     private static final String JOB_SIZE = "jenkins.fs.job.size";
     private static final String JOB_FILE_COUNT = "jenkins.fs.job.file_count";
-
-    @Getter
-    protected static class DirectorySize {
-        private final long size;
-        private final long count;
-
-        public DirectorySize(long size, long count) {
-            this.size = size;
-            this.count = count;
-        }
-    }
 
     @Override
     public List<MintMetric> collect() {
@@ -94,9 +84,13 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
             Map<String, String> dimensions = new HashMap<>(commonDimensions);
             dimensions.put("path", Utilities.encloseInQuotes(entry.getValue()));
 
-            var directorySize = this.calculateRemoteDirectorySize(entry.getKey());
-            metrics.add(new MintMetric(DIRECTORY_SIZE, directorySize.getSize(), dimensions));
-            metrics.add(new MintMetric(DIRECTORY_FILE_COUNT, directorySize.getCount(), dimensions));
+            try {
+                var directorySize = entry.getKey().act(new DirectorySizeCallable());
+                metrics.add(new MintMetric(DIRECTORY_SIZE, directorySize.getSize(), dimensions));
+                metrics.add(new MintMetric(DIRECTORY_FILE_COUNT, directorySize.getCount(), dimensions));
+            } catch (IOException | InterruptedException e) {
+                LOGGER.error(e.toString());
+            }
         }
         LOGGER.info("Added {} metric lines.", metrics.size());
         LOGGER.info("Collected remote directory metrics in {}ms", System.currentTimeMillis() - startTime);
@@ -137,66 +131,17 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
             Map<String, String> dimensions = new HashMap<>(commonDimensions);
             dimensions.put("path", Utilities.encloseInQuotes(entry.getValue()));
 
-            var directorySize = this.calculateLocalDirectorySize(entry.getKey());
-            metrics.add(new MintMetric(DIRECTORY_SIZE, directorySize.getSize(), dimensions));
-            metrics.add(new MintMetric(DIRECTORY_FILE_COUNT, directorySize.getCount(), dimensions));
+            try {
+                var directorySize = calculateDirectorySize(entry.getKey());
+                metrics.add(new MintMetric(DIRECTORY_SIZE, directorySize.getSize(), dimensions));
+                metrics.add(new MintMetric(DIRECTORY_FILE_COUNT, directorySize.getCount(), dimensions));
+            } catch (IOException e) {
+                LOGGER.error(e.toString());
+            }
         }
         LOGGER.info("Added {} metric lines.", metrics.size());
         LOGGER.info("Collected local directory metrics in {}ms", System.currentTimeMillis() - startTime);
         return metrics;
-    }
-
-    /**
-     * Calculate the directory size by summing all files and subdirectories within it for a jenkins node.
-     *
-     * @param filePath The parent directory file path
-     * @return The size of the directory and count of files.
-     */
-    protected DirectorySize calculateRemoteDirectorySize(FilePath filePath) {
-        long count = 0;
-        long size = 0;
-        try {
-            for (FilePath file : filePath.list()) {
-                if (file.isDirectory()) {
-                    var directorySize = this.calculateRemoteDirectorySize(file);
-                    size += directorySize.getSize();
-                    count += directorySize.getCount();
-                } else {
-                    size += file.length();
-                    count++;
-                }
-            }
-        } catch (IOException | InterruptedException e) {
-            LOGGER.error("Error calculating directory size for a remote node: " + e);
-        }
-        return new DirectorySize(size, count);
-    }
-
-    /**
-     * Calculate the directory size by summing all files and subdirectories within it.
-     *
-     * @param directory The parent directory file object
-     * @return The size of the directory and count of files.
-     */
-    protected DirectorySize calculateLocalDirectorySize(File directory) {
-        long size = 0;
-        long count = 0;
-        File[] files = directory.listFiles();
-        if (files == null) {
-            return new DirectorySize(0, 0);
-        }
-
-        for (File file : files) {
-            if (file.isDirectory()) {
-                var directorySize = this.calculateLocalDirectorySize(file);
-                size += directorySize.getSize();
-                count += directorySize.getCount();
-            } else {
-                size += file.length();
-                count++;
-            }
-        }
-        return new DirectorySize(size, count);
     }
 
     protected List<MintMetric> collectRemoteFSMetrics(Node jenkinsNode) {
@@ -207,6 +152,7 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
         dimensions.put("node", jenkinsNode.getSelfLabel().getDisplayName());
         var rootPath = jenkinsNode.getRootPath();
         if (rootPath == null) {
+            LOGGER.warn("Could not get root path for Jenkins Node '" + jenkinsNode.getNodeName() + "'");
             return Collections.emptyList();
         }
         try {
@@ -267,14 +213,18 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
                 Map<String, String> dimensions = new HashMap<>(commonDimensions);
                 dimensions.put("job", Utilities.encloseInQuotes(job.getName()));
 
-                var directorySize = this.calculateLocalDirectorySize(job.getRootDir());
-                metrics.add(new MintMetric(JOB_SIZE, directorySize.getSize(), dimensions));
-                metrics.add(new MintMetric(JOB_FILE_COUNT, directorySize.getCount(), dimensions));
+                try {
+                    var directorySize = calculateDirectorySize(job.getRootDir());
+                    metrics.add(new MintMetric(JOB_SIZE, directorySize.getSize(), dimensions));
+                    metrics.add(new MintMetric(JOB_FILE_COUNT, directorySize.getCount(), dimensions));
+                } catch (IOException e) {
+                    LOGGER.error(e.toString());
+                }
             }
         }
 
         LOGGER.info("Added {} metric lines.", metrics.size());
-        LOGGER.info("Collected job filesystem metrics in {},ms", System.currentTimeMillis() - startTime);
+        LOGGER.info("Collected job filesystem metrics in {}ms", System.currentTimeMillis() - startTime);
         return metrics;
     }
 
