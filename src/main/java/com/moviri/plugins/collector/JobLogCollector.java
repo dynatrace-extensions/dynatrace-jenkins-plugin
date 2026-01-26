@@ -4,6 +4,8 @@ import com.moviri.plugins.Preload;
 import com.moviri.plugins.config.ValueStore;
 import com.moviri.plugins.ws.LogLine;
 import hudson.model.Job;
+import hudson.security.ACL;
+import hudson.security.ACLContext;
 import io.jenkins.cli.shaded.org.slf4j.Logger;
 import io.jenkins.cli.shaded.org.slf4j.LoggerFactory;
 import jenkins.model.Jenkins;
@@ -29,53 +31,68 @@ public class JobLogCollector implements Collector<List<LogLine>> {
     @Override
     public List<LogLine> collect() {
         LOGGER.info("Collecting logs...");
-        var jenkins = getJenkins();
-        var logLines = new ArrayList<LogLine>();
-        jobLoop: for (Job<?, ?> job : jenkins.getAllItems(Job.class)) {
-            var pipelineDisplayName = job.getDisplayName();
-            var pipelineRootDir = job.getRootDir().toPath();
-            int currentBuildNumber = getValueStore().getLastBuildId(pipelineDisplayName);
-            int nextBuildNumber = this.getNextBuildNumber(pipelineRootDir);
-
-            var buildDirectory = pipelineRootDir.resolve("builds");
-            if (currentBuildNumber >= nextBuildNumber) {
-                LOGGER.info("Skipping " + pipelineDisplayName + " since there are no new logs after build id '" + currentBuildNumber + "'");
-                continue;
-            }
-            while (currentBuildNumber < nextBuildNumber) {
-                var build = job.getBuild(String.valueOf(currentBuildNumber));
-                if (build.isBuilding()) {
-                    LOGGER.info("Build '" + currentBuildNumber + "' on " + pipelineDisplayName + " is not completed yet.");
-                    continue jobLoop;
-                }
-
-                LOGGER.info("Ingesting logs for '" + currentBuildNumber + "' on " + pipelineDisplayName);
-                var buildLogPath = buildDirectory.resolve(String.valueOf(currentBuildNumber)).resolve("log");
+        try (ACLContext ctx = ACL.as2(ACL.SYSTEM2)) {
+            var jenkins = getJenkins();
+            var logLines = new ArrayList<LogLine>();
+            jobLoop:
+            for (Job<?, ?> job : jenkins.getAllItems(Job.class)) {
+                var pipelineDisplayName = job.getDisplayName();
+                var pipelineRootDir = job.getRootDir().toPath();
+                int currentBuildNumber = getValueStore().getLastBuildId(pipelineDisplayName);
+                int nextBuildNumber;
                 try {
-                    Scanner scanner = createScanner(buildLogPath.toFile());
-                    StringBuilder sb = new StringBuilder();
-                    while (scanner.hasNextLine()) {
-                        var nextLine = this.trimCompressedBytes(scanner.nextLine());
-                        sb.append(nextLine).append("\n");
-                    }
-                    String content = sb.toString();
-                    LogLine.Status status = LogLine.Status.INFO;
-                    if (content.contains("Finished: FAILURE")) {
-                        status = LogLine.Status.ERROR;
-                    }
-                    var duration = build.getDuration();
-                    logLines.add(new LogLine(sb.toString(), pipelineDisplayName, String.valueOf(currentBuildNumber), status, Map.ofEntries(
-                            Map.entry("jenkins.build_duration_ms", String.valueOf(duration))
-                    )));
-                    scanner.close();
-                } catch (FileNotFoundException e) {
-                    LOGGER.error("File not found: " + e);
+                    nextBuildNumber = this.getNextBuildNumber(pipelineRootDir);
+                } catch (Exception e) {
+                    LOGGER.warn("Could not read nextBuildNumber for " + pipelineDisplayName + " (likely never triggered). Skipping.");
+                    continue;
                 }
-                currentBuildNumber++;
+
+                var buildDirectory = pipelineRootDir.resolve("builds");
+                if (currentBuildNumber >= nextBuildNumber) {
+                    LOGGER.info("Skipping " + pipelineDisplayName + " since there are no new logs after build id '" + currentBuildNumber + "'");
+                    continue;
+                }
+                while (currentBuildNumber < nextBuildNumber) {
+                    var build = job.getBuild(String.valueOf(currentBuildNumber));
+                    if (build == null) {
+                        LOGGER.info("Build '" + currentBuildNumber + "' on " + pipelineDisplayName + " no longer exists (skipped).");
+                        currentBuildNumber++;
+                        continue;
+                    }
+
+                    if (build.isBuilding()) {
+                        LOGGER.info("Build '" + currentBuildNumber + "' on " + pipelineDisplayName + " is not completed yet.");
+                        continue jobLoop;
+                    }
+
+                    LOGGER.info("Ingesting logs for '" + currentBuildNumber + "' on " + pipelineDisplayName);
+                    var buildLogPath = buildDirectory.resolve(String.valueOf(currentBuildNumber)).resolve("log");
+                    try {
+                        Scanner scanner = createScanner(buildLogPath.toFile());
+                        StringBuilder sb = new StringBuilder();
+                        while (scanner.hasNextLine()) {
+                            var nextLine = this.trimCompressedBytes(scanner.nextLine());
+                            sb.append(nextLine).append("\n");
+                        }
+                        String content = sb.toString();
+                        LogLine.Status status = LogLine.Status.INFO;
+                        if (content.contains("Finished: FAILURE")) {
+                            status = LogLine.Status.ERROR;
+                        }
+                        var duration = build.getDuration();
+                        logLines.add(new LogLine(sb.toString(), pipelineDisplayName, String.valueOf(currentBuildNumber), status, Map.ofEntries(
+                                Map.entry("jenkins.build_duration_ms", String.valueOf(duration))
+                        )));
+                        scanner.close();
+                    } catch (FileNotFoundException e) {
+                        LOGGER.error("File not found: " + e);
+                    }
+                    currentBuildNumber++;
+                }
+                getValueStore().setLastBuildId(pipelineDisplayName, nextBuildNumber);
             }
-            getValueStore().setLastBuildId(pipelineDisplayName, nextBuildNumber);
+            return logLines;
         }
-        return logLines;
     }
 
     protected ValueStore getValueStore() {

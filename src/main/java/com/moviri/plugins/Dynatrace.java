@@ -4,7 +4,6 @@ import com.moviri.plugins.collector.ExecutorCollector;
 import com.moviri.plugins.collector.FilesystemMetricCollector;
 import com.moviri.plugins.collector.JobLogCollector;
 import com.moviri.plugins.config.DynatraceConfiguration;
-import com.moviri.plugins.config.KeyValuePair;
 import com.moviri.plugins.ws.DynatraceClient;
 import com.moviri.plugins.ws.MintMetric;
 import hudson.Extension;
@@ -20,7 +19,6 @@ import org.reflections.Reflections;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -32,7 +30,7 @@ import java.util.stream.Collectors;
 public class Dynatrace extends PeriodicWork {
 
     private static final Logger DT_LOGGER = LoggerFactory.getLogger(Dynatrace.class);
-    private static final String VERSION = "1.0.6";
+    private static final String VERSION = "1.0.7";
     private static final long RECURRENCE_PERIOD = TimeUnit.MINUTES.toMillis(1);
     public static final String LOG_PACKAGE_NAME = "com.moviri.plugins";
     public static final String LOG_RECORDER_NAME = "Dynatrace logs";
