@@ -1,8 +1,10 @@
 package com.moviri.plugins.ws;
 
+import com.moviri.plugins.config.KeyValuePair;
 import lombok.Getter;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @Getter
@@ -28,26 +30,32 @@ public class LogLine {
     private final String job;
     private final String buildId;
     private final Status status;
-    private final Map<String, String> extraEntries;
+    private final Map<String, String> dimensions;
 
     public LogLine(String content, String job, String buildId, Status status) {
         this.content = content;
         this.job = job;
         this.buildId = buildId;
         this.status = status;
-        this.extraEntries = new HashMap<>();
+        this.dimensions = new HashMap<>();
     }
 
-    public LogLine(String content, String job, String buildId, Status status, Map<String, String> extraEntries) {
+    public LogLine(String content, String job, String buildId, Status status, Map<String, String> dimensions) {
         this.content = content;
         this.job = job;
         this.buildId = buildId;
         this.status = status;
-        this.extraEntries = extraEntries;
+        this.dimensions = dimensions;
     }
 
     public LogLine(String content, String job, String buildId) {
         this(content, job, buildId, Status.INFO);
+    }
+
+    public void addDimensions(List<KeyValuePair> customDimensions) {
+        for (KeyValuePair pair : customDimensions) {
+            this.dimensions.put(pair.getKey(), pair.getValue());
+        }
     }
 
     public Map<String, String> toMap() {
@@ -57,7 +65,7 @@ public class LogLine {
                 Map.entry("jenkins.build_id", this.buildId),
                 Map.entry("status", this.status.toString())
         ));
-        result.putAll(this.extraEntries);
+        result.putAll(this.dimensions);
         return result;
     }
 

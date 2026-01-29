@@ -16,10 +16,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Scanner;
+import java.util.*;
 
 // https://github.com/LarrysGIT/Extract-Jenkins-Raw-Log
 @Preload
@@ -80,9 +77,9 @@ public class JobLogCollector implements Collector<List<LogLine>> {
                             status = LogLine.Status.ERROR;
                         }
                         var duration = build.getDuration();
-                        logLines.add(new LogLine(sb.toString(), pipelineDisplayName, String.valueOf(currentBuildNumber), status, Map.ofEntries(
-                                Map.entry("jenkins.build_duration_ms", String.valueOf(duration))
-                        )));
+                        Map<String, String> dimensions = new HashMap<>();
+                        dimensions.put("jenkins.build_duration_ms", String.valueOf(duration));
+                        logLines.add(new LogLine(sb.toString(), pipelineDisplayName, String.valueOf(currentBuildNumber), status, dimensions));
                         scanner.close();
                     } catch (FileNotFoundException e) {
                         LOGGER.error("File not found: " + e);
