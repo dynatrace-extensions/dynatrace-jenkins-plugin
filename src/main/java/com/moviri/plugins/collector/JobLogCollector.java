@@ -33,36 +33,36 @@ public class JobLogCollector implements Collector<List<LogLine>> {
             var logLines = new ArrayList<LogLine>();
             jobLoop:
             for (Job<?, ?> job : jenkins.getAllItems(Job.class)) {
-                var pipelineDisplayName = job.getDisplayName();
+                var pipelineFullName = job.getFullName();
                 var pipelineRootDir = job.getRootDir().toPath();
-                int currentBuildNumber = getValueStore().getLastBuildId(pipelineDisplayName);
+                int currentBuildNumber = getValueStore().getLastBuildId(pipelineFullName);
                 int nextBuildNumber;
                 try {
                     nextBuildNumber = this.getNextBuildNumber(pipelineRootDir);
                 } catch (Exception e) {
-                    LOGGER.warn("Could not read nextBuildNumber for " + pipelineDisplayName + " (likely never triggered). Skipping.");
+                    LOGGER.warn("Could not read nextBuildNumber for " + pipelineFullName + " (likely never triggered). Skipping.");
                     continue;
                 }
 
                 var buildDirectory = pipelineRootDir.resolve("builds");
                 if (currentBuildNumber >= nextBuildNumber) {
-                    LOGGER.info("Skipping " + pipelineDisplayName + " since there are no new logs after build id '" + currentBuildNumber + "'");
+                    LOGGER.info("Skipping " + pipelineFullName + " since there are no new logs after build id '" + currentBuildNumber + "'");
                     continue;
                 }
                 while (currentBuildNumber < nextBuildNumber) {
                     var build = job.getBuild(String.valueOf(currentBuildNumber));
                     if (build == null) {
-                        LOGGER.info("Build '" + currentBuildNumber + "' on " + pipelineDisplayName + " no longer exists (skipped).");
+                        LOGGER.info("Build '" + currentBuildNumber + "' on " + pipelineFullName + " no longer exists (skipped).");
                         currentBuildNumber++;
                         continue;
                     }
 
                     if (build.isBuilding()) {
-                        LOGGER.info("Build '" + currentBuildNumber + "' on " + pipelineDisplayName + " is not completed yet.");
+                        LOGGER.info("Build '" + currentBuildNumber + "' on " + pipelineFullName + " is not completed yet.");
                         continue jobLoop;
                     }
 
-                    LOGGER.info("Ingesting logs for '" + currentBuildNumber + "' on " + pipelineDisplayName);
+                    LOGGER.info("Ingesting logs for '" + currentBuildNumber + "' on " + pipelineFullName);
                     var buildLogPath = buildDirectory.resolve(String.valueOf(currentBuildNumber)).resolve("log");
                     try {
                         Scanner scanner = createScanner(buildLogPath.toFile());
@@ -79,14 +79,14 @@ public class JobLogCollector implements Collector<List<LogLine>> {
                         var duration = build.getDuration();
                         Map<String, String> dimensions = new HashMap<>();
                         dimensions.put("jenkins.build_duration_ms", String.valueOf(duration));
-                        logLines.add(new LogLine(sb.toString(), pipelineDisplayName, String.valueOf(currentBuildNumber), status, dimensions));
+                        logLines.add(new LogLine(sb.toString(), pipelineFullName, String.valueOf(currentBuildNumber), status, dimensions));
                         scanner.close();
                     } catch (FileNotFoundException e) {
                         LOGGER.error("File not found: " + e);
                     }
                     currentBuildNumber++;
                 }
-                getValueStore().setLastBuildId(pipelineDisplayName, nextBuildNumber);
+                getValueStore().setLastBuildId(pipelineFullName, nextBuildNumber);
             }
             return logLines;
         }
