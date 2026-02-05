@@ -30,7 +30,7 @@ public class FilesystemUtils {
         Path path = directory.toPath();
 
         if (Files.exists(path)) {
-            Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+            Files.walkFileTree(path, new SimpleFileVisitor<>() {
                 @Override
                 public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
                     size.addAndGet(attrs.size());

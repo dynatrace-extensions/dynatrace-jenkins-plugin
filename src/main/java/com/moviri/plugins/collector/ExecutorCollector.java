@@ -2,7 +2,8 @@ package com.moviri.plugins.collector;
 
 import com.moviri.plugins.Preload;
 import com.moviri.plugins.ws.MintMetric;
-import hudson.model.*;
+import hudson.model.Label;
+import hudson.model.LoadStatistics;
 import io.jenkins.cli.shaded.org.slf4j.Logger;
 import io.jenkins.cli.shaded.org.slf4j.LoggerFactory;
 import jenkins.model.Jenkins;
@@ -11,8 +12,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static java.util.Map.entry;
 
 @Preload
 public class ExecutorCollector implements Collector<List<MintMetric>> {
