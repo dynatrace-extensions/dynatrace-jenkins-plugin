@@ -33,6 +33,7 @@ public class JobLogCollector implements Collector<List<LogLine>> {
             var logLines = new ArrayList<LogLine>();
             jobLoop:
             for (Job<?, ?> job : jenkins.getAllItems(Job.class)) {
+                var pipelineDisplayName = job.getDisplayName();
                 var pipelineFullName = job.getFullName();
                 var pipelineRootDir = job.getRootDir().toPath();
                 int currentBuildNumber = getValueStore().getLastBuildId(pipelineFullName);
@@ -79,7 +80,8 @@ public class JobLogCollector implements Collector<List<LogLine>> {
                         var duration = build.getDuration();
                         Map<String, String> dimensions = new HashMap<>();
                         dimensions.put("jenkins.build_duration_ms", String.valueOf(duration));
-                        logLines.add(new LogLine(sb.toString(), pipelineFullName, String.valueOf(currentBuildNumber), status, dimensions));
+                        dimensions.put("jenkins.job_full_name", pipelineFullName);
+                        logLines.add(new LogLine(sb.toString(), pipelineDisplayName, String.valueOf(currentBuildNumber), status, dimensions));
                         scanner.close();
                     } catch (FileNotFoundException e) {
                         LOGGER.error("File not found: " + e);

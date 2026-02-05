@@ -211,7 +211,8 @@ public class FilesystemMetricCollector implements Collector<List<MintMetric>> {
             if (job instanceof TopLevelItem) {
 //                job.getBuilds().get(0).getDuration()
                 Map<String, String> dimensions = new HashMap<>(commonDimensions);
-                dimensions.put("job", Utilities.encloseInQuotes(job.getFullName()));
+                dimensions.put("job", Utilities.encloseInQuotes(job.getName()));
+                dimensions.put("job_full_name", Utilities.encloseInQuotes(job.getFullName()));
 
                 try {
                     var directorySize = calculateDirectorySize(job.getRootDir());
